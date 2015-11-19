@@ -76,9 +76,20 @@ public class CreateShareViaLinkOperation extends SyncOperation {
         // Check if the share link already exists
         RemoteOperation operation = new GetRemoteSharesForFileOperation(mPath, false, false);
         RemoteOperationResult result = operation.execute(client);
-        // TODO - fix this check; if the user already shared the file with users or group, a share via link will not be created
 
-        if (!result.isSuccess() || result.getData().size() <= 0) {
+        // Create public link if doesn't exist yet
+        boolean publicShareExists = false;
+        if (result.isSuccess()) {
+            OCShare share = null;
+            for (int i=0 ; i<result.getData().size(); i++) {
+                share = (OCShare) result.getData().get(i);
+                if (ShareType.PUBLIC_LINK.equals(share.getShareType())) {
+                    publicShareExists = true;
+                    break;
+                }
+            }
+        }
+        if (!publicShareExists) {
             operation = new CreateRemoteShareOperation(
                     mPath,
                     ShareType.PUBLIC_LINK,
